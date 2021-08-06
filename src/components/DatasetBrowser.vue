@@ -3,29 +3,33 @@
     <b-col cols=3>
         <h1>Datasets</h1>
         <b-list-group>
-            <b-list-group-item
-             v-for="dataset in datasets"
-             :key="dataset.id" @click="selectDataset(dataset.id)" :active="selected === dataset.id">
-                {{dataset.name}}
-            </b-list-group-item>
+            <dataset-group v-for="org in organizations"
+                :key="org.id"
+                :selected="selected"
+                :group="org"
+                @selected="selectDataset"
+            ></dataset-group>
         </b-list-group>
+
     </b-col>
     <b-col>
         <!-- Dataset View -->
-        <dataset-pane v-if="selected !== undefined" :id="selected"></dataset-pane>
+        <dataset-pane v-if="selected !== undefined" :dataset="selected"></dataset-pane>
     </b-col>
 </b-row>
 </template>
 
 <script>
+import DatasetGroup from './DatasetGroup.vue'
 import DatasetPane from './DatasetPane.vue'
 
 export default  {
     name: 'DatasetBrowser',
-    components: {DatasetPane},
+    components: {DatasetPane, DatasetGroup},
     data(){
         return {
         datasets: [],
+        organizations: [],
         selected: undefined
         }
     },
@@ -40,18 +44,52 @@ export default  {
     methods:{
         getDatasets(){
             let instance = this
-            this.$neo4j.run("MATCH (d:dataset) return d").then(
+            this.$neo4j.run("MATCH (o:organization)-[:owns]->(d:dataset) return d,o").then(
                     result => {
+
                     result.records.forEach(record=>{
                         instance.datasets.push({
                             id:record.get('d').properties.id,
-                            name:record.get('d').properties.name})
+                            name:record.get('d').properties.name,
+                            orgName: record.get('o').properties.name,
+                            orgId: record.get('o').properties.id
+                            })
                     })
+
+                    instance.organizations = this.computeOrgs()
+                    
                 }
             )
         },
-        selectDataset(id){
-            this.selected = id
+        selectDataset(dataset){
+            this.selected = dataset
+        },
+        computeOrgs(){
+            let resultMap = new Map()
+            console.log('computing organizations')
+            this.datasets.forEach(dataset=>{
+                console.log(dataset.orgId)
+                if (resultMap.has(dataset.orgId)){
+                    console.log('has!')
+                    let org = resultMap.get(dataset.orgId)
+                    org.datasets.push(dataset)
+                    resultMap.set(dataset.orgId, org)
+                }else{
+                    console.log('has not')
+                    resultMap.set(dataset.orgId, {
+                        name:dataset.orgName,
+                        id: dataset.orgId,
+                        datasets: [dataset]
+                    })
+                }
+            })
+
+            let result = []
+            resultMap.forEach((value)=>{
+                result.push(value)
+            })
+
+            return result
         }
     }
 }

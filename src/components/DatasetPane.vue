@@ -8,7 +8,7 @@
         </div>
     </div>
     <div class="d-flex justify-content-between">
-        <h4 class="text-left">{{id}}</h4>
+        <h4 class="text-left">{{dataset.name}}</h4>
         <p>{{elements.length}} fields</p>
     </div>
     
@@ -27,7 +27,7 @@
 
 export default {
     name: "DatasetPane",
-    props: ['id'],
+    props: ['dataset'],
     data(){
         return{
             elements: [],
@@ -65,7 +65,7 @@ export default {
             let instance = this
             instance.elements = []
             this.$neo4j.run("MATCH (d:dataset {id:$id})-[:has]->(e:element) return e", {
-                id: instance.id
+                id: instance.dataset.id
             }).then(
                     result => {
                     result.records.forEach(record=>{
@@ -82,7 +82,7 @@ export default {
             let instance = this
             instance.publicallyVisible = []
             this.$neo4j.run("MATCH (d:dataset {id:$id})-[:has]->(e:element)<-[:can_see]-(u:user {id:'public'}) return e",{
-                id: instance.id
+                id: instance.dataset.id
             }).then(
                 result =>{
                     result.records.forEach(record=>{
