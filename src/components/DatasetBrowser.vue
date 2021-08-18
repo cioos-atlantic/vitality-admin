@@ -36,7 +36,7 @@ export default  {
     mounted(){
         console.log("Creating neo4j driver")
         let instance = this
-        this.$neo4j.connect('bolt', '192.168.2.18', 7687, 'neo4j', 'password').then(()=>{
+        this.$neo4j.connect('bolt', 'localhost', process.env.VUE_APP_NEO4J_PORT, process.env.VUE_APP_NEO4J_USERNAME, process.env.VUE_APP_NEO4J_PASSWORD).then(()=>{
             instance.getDatasets()
         })
 

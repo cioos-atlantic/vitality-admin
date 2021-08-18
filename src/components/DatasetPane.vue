@@ -97,12 +97,12 @@ export default {
             // Clear old visiblity settings for this user
             this.$neo4j.run("MATCH (u:user {id:$user})-[r:can_see]->(e:element)<-[:has]-(d:dataset {id:$datasetId}) DELETE r",{
                 user:userId,
-                datasetId: instance.id
+                datasetId: instance.dataset.id
             }).then(()=>{
                 
                 instance.$neo4j.run("MATCH (e:element)<-[:has]-(d:dataset) WHERE e.id IN $fields AND d.id = $datasetId CREATE (u:user {id:$user})-[:can_see]->(e)",
                 {
-                    datasetId: instance.id,
+                    datasetId: instance.dataset.id,
                     user:userId,
                     fields: fieldIds
                 }).then(()=>{
